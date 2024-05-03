@@ -7,7 +7,6 @@ class Settings(BaseSettings):
     model: str = "gpt-4-turbo-preview"
 
     access_token: str
-    recipient_waid: str
     phone_number_id: str
     version: str = "v19.0"
     app_id: str
