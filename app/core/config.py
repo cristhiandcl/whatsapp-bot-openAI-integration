@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     app_secret: str
     verify_token: str
 
+    mongo_db: str = "merli"
+    mongo_collection: str = "jarvis"
+    mongo_host: str
+    mongo_port: int
+    mongo_username: str = ""
+    mongo_password: str = ""
+
     algorithm: str = "HS256"
 
     class Config:

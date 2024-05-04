@@ -3,17 +3,12 @@
 from fastapi import APIRouter, Request, HTTPException, status
 import logging
 
-from openai_tools_gpt import ToolsGPT
 from app.core.config import settings
 from .utils.send_message import send_jarvis_response
-
-context = [{"role"   : "system",
-            "content": """You are Jarvis, my personal assistant expert on coding stuff, 
-            I work on a mac with python most of the time, so unless the language is specified, 
-            assume you are always asked about an implementation in python, you also answer question about general topics"""}]
+from app.api.deps import GPT
+from app.database.mongo_config import mongo_collection
 
 router = APIRouter()
-jarvis = ToolsGPT(with_memory=True, memory=context)
 
 
 # FastAPI Routes
@@ -43,16 +38,15 @@ async def get_webhook(request: Request):
 
 
 @router.post("/")
-async def post_webhook(request: Request):
+async def post_webhook(gpt_data: GPT):
     # Logic for handling POST requests
-    body = await request.json()
-    container = body["entry"][0]["changes"][0]["value"]
 
-    if container.get("messages"):
-        contact: str = container["messages"][0]["from"]
-        message: str = container["messages"][0]["text"]["body"]
-        response: str = jarvis.invoke(message)
-
-        send_jarvis_response(contact, response)
+    if gpt_data:
+        jarvis = gpt_data["gpt"]
+        response: str = jarvis.invoke(gpt_data["message"])
+        send_jarvis_response(gpt_data["contact"], response)
+        await mongo_collection.insert_one({"contact": gpt_data["contact"],
+                                           "query"  : gpt_data["message"],
+                                           "answer" : response})
 
     return {"status": "ok"}
